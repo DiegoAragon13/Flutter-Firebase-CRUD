@@ -1,6 +1,7 @@
 import 'package:marmotaphilp/photo.dart';
 import 'package:marmotaphilp/cards.dart';
 import 'package:flutter/material.dart';
+import 'package:marmotaphilp/splashScreen.dart';
 
 
 class Start extends StatefulWidget{
@@ -13,7 +14,8 @@ class _MyState extends State<Start>{
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     Photo(),
-    Cards()
+    Cards(),
+    SplashScreen()
   ];
   @override
   Widget build(BuildContext context) {

@@ -6,216 +6,143 @@ class Details extends StatefulWidget {
   final Data data;
   final String id;
 
-  Details({required this.data, required this.id});
-
+  const Details({Key? key, required this.data, required this.id}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() {
-    return _MyDetails();
-  }
+  _DetailsState createState() => _DetailsState();
 }
 
-class _MyDetails extends State<Details> {
-  late TextEditingController _controladorCiudad;
-  late TextEditingController _controladorTemperatura;
-  late TextEditingController _controladorCondicion;
-  late TextEditingController _controladorIcon;
-
-  late Data data;
-  late String id;
+class _DetailsState extends State<Details> {
+  late TextEditingController _cityController;
+  late TextEditingController _temperatureController;
+  late TextEditingController _conditionController;
+  late TextEditingController _iconController;
 
   @override
   void initState() {
     super.initState();
-    data = widget.data;
-    id = widget.id;
-
-    _controladorCiudad = TextEditingController(text: data.ciudad);
-    _controladorTemperatura = TextEditingController(text: data.temperatura);
-    _controladorCondicion = TextEditingController(text: data.condicion);
-    _controladorIcon = TextEditingController(text: data.icon);
+    _cityController = TextEditingController(text: widget.data.ciudad);
+    _temperatureController = TextEditingController(text: widget.data.temperatura);
+    _conditionController = TextEditingController(text: widget.data.condicion);
+    _iconController = TextEditingController(text: widget.data.icon);
   }
 
-  Future<void> actualizarDatos(String id, String ciudad, String temperatura,
-      String condicion, String icon) async {
+  Future<void> _updateData() async {
     try {
-      DatabaseReference ref = FirebaseDatabase.instance.ref('clima/$id');
+      DatabaseReference ref = FirebaseDatabase.instance.ref('clima/${widget.id}');
       await ref.update({
-        'ciudad': ciudad,
-        'temperatura': temperatura,
-        'condicion': condicion,
-        'icon': icon,
+        'ciudad': _cityController.text,
+        'temperatura': _temperatureController.text,
+        'condicion': _conditionController.text,
+        'icon': _iconController.text,
       });
-      print('Datos actualizados correctamente');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Datos actualizados correctamente')),
+      );
     } catch (e) {
-      print('Error al actualizar datos: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar datos: $e')),
+      );
     }
   }
 
-
-  Future<void> eliminarDatos(String id) async {
+  Future<void> _deleteData() async {
     try {
-      DatabaseReference ref = FirebaseDatabase.instance.ref('clima/$id');
+      DatabaseReference ref = FirebaseDatabase.instance.ref('clima/${widget.id}');
       await ref.remove();
-      print('Datos eliminados correctamente');
+      Navigator.of(context).pop(); // Regresar a la pantalla anterior
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Datos eliminados correctamente')),
+      );
     } catch (e) {
-      print('Error al eliminar datos: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar datos: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-
     return Scaffold(
       appBar: AppBar(
-        elevation: 1.0,
+        title: Text(widget.data.ciudad),
         backgroundColor: Colors.blueGrey,
-        title: Text(
-          data.ciudad,
-          style: TextStyle(fontSize: 20),
-        ),
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            SizedBox(
-              height: size.height,
-              child: Stack(
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(top: size.height * 0.38),
-                    height: 500,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(data.imagen),
-                        fit: BoxFit.fill,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 20, right: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 10),
-                        TextField(
-                          controller: _controladorCiudad,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Ciudad',
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextField(
-                          controller: _controladorTemperatura,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Temperatura',
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextField(
-                          controller: _controladorCondicion,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Condición',
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextField(
-                          controller: _controladorIcon,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Icono',
-                          ),
-                        ),
-                        SizedBox(height: 20), // Espacio antes de los botones
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO EDITABLE
-                                if (_controladorCiudad.text.isNotEmpty &&
-                                    _controladorTemperatura.text.isNotEmpty &&
-                                    _controladorCondicion.text.isNotEmpty &&
-                                    _controladorIcon.text.isNotEmpty) {
-                                  actualizarDatos(id,
-                                    _controladorCiudad.text,
-                                    _controladorTemperatura.text,
-                                    _controladorCondicion.text,
-                                    _controladorIcon.text,
-                                  ).then((_) {
-                                    setState(() {
-                                      data.ciudad = _controladorCiudad.text;
-                                      data.temperatura = _controladorTemperatura.text;
-                                      data.condicion = _controladorCondicion.text;
-                                      data.icon = _controladorIcon.text;
-                                    });
-                                  }).catchError((error) {
-                                    print('Error al editar: $error');
-                                  });
-                                }
-                              },
-                              child: Text("Editar"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                //Todo eliminar agregar a futuro
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text("Confirmar eliminación"),
-                                      content: Text("¿Seguro que quieres eliminar esta ciudad?"),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text("Cancelar"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            eliminarDatos(id).then((_) {
-                                              Navigator.pop(context); // Cerrar la página de detalles
-                                            }).catchError((error) {
-                                              print('Error al eliminar: $error');
-                                            });
-                                          },
-                                          child: Text("Eliminar"),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              child: Text("Eliminar"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            Image.network(widget.data.imagen, fit: BoxFit.cover),
+            SizedBox(height: 20),
+            _buildTextField(_cityController, 'Ciudad'),
+            SizedBox(height: 10),
+            _buildTextField(_temperatureController, 'Temperatura'),
+            SizedBox(height: 10),
+            _buildTextField(_conditionController, 'Condición'),
+            SizedBox(height: 10),
+            _buildTextField(_iconController, 'Icono'),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _updateData,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green[200], foregroundColor: Colors.black),
+                  child: Text('Editar'),
+                ),
+                ElevatedButton(
+                  //Quiero que el texto sea negro
+                  onPressed: () => _showDeleteConfirmDialog(),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red[200], foregroundColor: Colors.black),
+                  child: Text('Eliminar'),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  TextField _buildTextField(TextEditingController controller, String label) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(),
+        labelText: label,
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirmar eliminación'),
+        content: Text('¿Seguro que quieres eliminar esta ciudad?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteData();
+            },
+            child: Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _cityController.dispose();
+    _temperatureController.dispose();
+    _conditionController.dispose();
+    _iconController.dispose();
+    super.dispose();
   }
 }
